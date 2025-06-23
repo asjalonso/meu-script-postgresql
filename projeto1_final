@@ -1,0 +1,75 @@
+CREATE SCHEMA data_warehouse2;
+
+-- 1. Criando a "Tabela-Fato" Execucão Financeira
+
+CREATE TABLE data_warehouse2.fato_exec_financeira (
+	id INT PRIMARY KEY,
+	cod_ne VARCHAR(50),
+	cod_np VARCHAR(50),
+	vlr_empenho NUMERIC(20,2),
+	valorpago NUMERIC(20,2)
+);
+
+-- 1.1 Inserindo Dados na "Tabela-Fato" Execucão Financeira
+
+INSERT INTO data_warehouse2.fato_exec_financeira (id,cod_ne,cod_np,vlr_empenho,valorpago)
+SELECT id,cod_ne,cod_np,vlr_empenho,valorpago 
+	FROM public.execucao_financeira;
+
+SELECT * FROM data_warehouse2.fato_exec_financeira;
+
+-- Criando a Tabela-Dimensão Orgão
+
+CREATE TABLE data_warehouse2.dim_orgao (
+	id INT,
+	codigo_orgao VARCHAR(10),
+	sigla VARCHAR(20),
+	desc_orgao VARCHAR(100),
+CONSTRAINT id_dim_orgao FOREIGN KEY (id) REFERENCES data_warehouse2.fato_exec_financeira (id) -- Garantindo que o valor na tabela exista como chave primaria em outra tabela
+);
+
+SELECT * FROM data_warehouse2.dim_orgao;
+
+INSERT INTO data_warehouse2.dim_orgao (id, codigo_orgao,sigla,desc_orgao) -- Inserindo dados na Tabela-Dimensão Orgão 
+SELECT id, codigo_orgao,sigla,dsc_orgao FROM public.execucao_financeira; -- Importando dados da Tabela Execução_financeira no public
+
+SELECT * FROM data_warehouse2.dim_orgao; -- Visualizando a Tabela-Dimensão Orgão
+
+-- Criando Tabela-Dimensão Tempo
+
+CREATE TABLE data_warehouse2.dim_tempo (
+	id INT NOT NULL,
+	num_ano VARCHAR(5),
+	dth_empenho DATE,
+	dth_pagamento DATE,
+CONSTRAINT id_dim_tempo FOREIGN KEY (id) REFERENCES data_warehouse2.fato_exec_financeira(id) -- Garantindo que o valor na tabela exista como chave primaria em outra tabela
+);
+INSERT INTO data_warehouse2.dim_tempo (id,num_ano,dth_empenho,dth_pagamento) -- Inserindo dados na Tabela-Dimensão Tempo 
+SELECT id,num_ano,dth_empenho,dth_pagamento FROM public.execucao_financeira; -- Importando dados da Tabela Execução_financeira no public
+
+SELECT * FROM data_warehouse2.dim_tempo;
+
+-- Criando Tabela-Dimensão Categoria
+
+CREATE TABLE data_warehouse2.dim_categoria(
+	id INT NOT NULL,
+	dsc_item_categoria VARCHAR (100),
+CONSTRAINT id_dim_categoria FOREIGN KEY (id) REFERENCES data_warehouse2.fato_exec_financeira (id) -- Garantindo que o valor na tabela exista como chave primaria em outra tabela
+);
+INSERT INTO data_warehouse2.dim_categoria (id, dsc_item_categoria)
+SELECT id, dsc_item_categoria FROM public.execucao_financeira;
+
+SELECT * FROM data_warehouse2.dim_categoria;
+
+-- Criando Tabela-Dimensão Elemento
+
+CREATE TABLE data_warehouse2.dim_elemento(
+	id INT NOT NULL,
+	dsc_item_elemento VARCHAR (400),
+CONSTRAINT id_dim_elemento FOREIGN KEY (id) REFERENCES data_warehouse2.fato_exec_financeira (id)
+);
+
+INSERT INTO data_warehouse2.dim_elemento (id, dsc_item_elemento)
+SELECT id, dsc_item_elemento FROM public.execucao_financeira;
+
+SELECT * FROM data_warehouse2.dim_elemento;
